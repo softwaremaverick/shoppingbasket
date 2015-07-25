@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Supermarket</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="text_selectitems">Select Items</string>
+    <string name="text_checkout">Checkout</string>
+    <string name="text_total">Total</string>
+</resources>
