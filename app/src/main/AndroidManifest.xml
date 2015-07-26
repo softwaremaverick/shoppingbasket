@@ -11,7 +11,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".ItemSelectionActivity"
+            android:name="uk.co.adaptableit.shoppingbasket.ItemSelectionActivity"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,7 +21,7 @@
         </activity>
 
         <service
-            android:name=".NetworkRequestService"
+            android:name="uk.co.adaptableit.shoppingbasket.NetworkRequestService"
             android:enabled="true"
             android:exported="false"></service>
 

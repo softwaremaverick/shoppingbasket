@@ -1,4 +1,4 @@
-package uk.co.adaptableit.shoppingbasket2;
+package uk.co.adaptableit.shoppingbasket;
 
 import java.util.Map;
 

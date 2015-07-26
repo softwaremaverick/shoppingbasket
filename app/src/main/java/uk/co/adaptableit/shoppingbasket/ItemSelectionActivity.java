@@ -1,4 +1,4 @@
-package uk.co.adaptableit.shoppingbasket2;
+package uk.co.adaptableit.shoppingbasket;
 
 import android.graphics.Color;
 import android.os.Bundle;
@@ -23,6 +23,8 @@ import org.json.JSONException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+
+import uk.co.adaptableit.shoppingbasket2.R;
 
 
 public class ItemSelectionActivity extends ActionBarActivity {

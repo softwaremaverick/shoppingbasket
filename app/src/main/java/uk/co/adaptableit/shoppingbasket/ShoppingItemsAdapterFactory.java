@@ -1,4 +1,4 @@
-package uk.co.adaptableit.shoppingbasket2;
+package uk.co.adaptableit.shoppingbasket;
 
 import android.content.Context;
 import android.widget.SimpleAdapter;

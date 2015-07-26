@@ -1,4 +1,4 @@
-package uk.co.adaptableit.shoppingbasket2;
+package uk.co.adaptableit.shoppingbasket;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
