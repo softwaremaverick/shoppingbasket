@@ -14,9 +14,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.octo.android.robospice.SpiceManager;
+import com.octo.android.robospice.persistence.DurationInMillis;
 import com.octo.android.robospice.persistence.exception.SpiceException;
-import com.octo.android.robospice.request.SpiceRequest;
 import com.octo.android.robospice.request.listener.RequestListener;
+
+import org.json.JSONException;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -28,26 +30,32 @@ public class ItemSelectionActivity extends ActionBarActivity {
     public static final String SAVED_SELECTED_ITEMS = "SELECTED_ITEMS";
     public static final String SAVED_SELECTED_ITEMS_COST = "SELECTED_ITEMS_COST";
 
+    private RequestListener<String> EXCHANGE_RATES_LISTENER = new RequestListener<String>() {
+        @Override
+        public void onRequestFailure(SpiceException spiceException) {
+            Toast.makeText(ItemSelectionActivity.this, "fAILURE", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onRequestSuccess(String jsonResponse) {
+            Toast.makeText(ItemSelectionActivity.this, "Success", Toast.LENGTH_SHORT).show();
+
+            try {
+                ExchangeRatesDto rates = ExchangeRatesDeserializer.deserialize(jsonResponse);
+
+                Toast.makeText(ItemSelectionActivity.this, "UKP=" + rates.getRates().get("GBP").toString(), Toast.LENGTH_SHORT).show();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    };
+
     private SpiceManager manager = new SpiceManager(NetworkRequestService.class);
 
     private ShoppingBasket basket = new ShoppingBasket();
 
     private SimpleAdapter adapter;
     private TextView costTextView;
-
-    class NetworkListener implements RequestListener<Boolean> {
-        @Override
-        public void onRequestFailure(SpiceException spiceException) {
-            TextView tv = (TextView) ItemSelectionActivity.this.findViewById(R.id.shopping);
-            tv.setText("Failure");
-        }
-
-        @Override
-        public void onRequestSuccess(Boolean aBoolean) {
-            TextView tv = (TextView) ItemSelectionActivity.this.findViewById(R.id.shopping);
-            tv.setText("Success");
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,21 +159,7 @@ public class ItemSelectionActivity extends ActionBarActivity {
 
         manager.start(this);
 
-        SpiceRequest request = new ExchangeRatesRequest();
-
-        manager.execute(request, new RequestListener<ExchangeRatesDto>() {
-            @Override
-            public void onRequestFailure(SpiceException spiceException) {
-                Toast.makeText(ItemSelectionActivity.this, "fAILURE", Toast.LENGTH_SHORT).show();;
-            }
-
-            @Override
-            public void onRequestSuccess(ExchangeRatesDto o) {
-                Toast.makeText(ItemSelectionActivity.this, "Success " + o.toString(), Toast.LENGTH_SHORT).show();
-
-                Toast.makeText(ItemSelectionActivity.this, "UKP=" + o.getRates().get("GBP").toString(), Toast.LENGTH_SHORT).show();;
-            }
-        });
+        manager.execute(new ExchangeRatesRequest(), "usd", DurationInMillis.ONE_HOUR, EXCHANGE_RATES_LISTENER);
     }
 
     @Override
@@ -180,15 +174,12 @@ public class ItemSelectionActivity extends ActionBarActivity {
         switch (item.getItemId()) {
             case R.id.action_checkout:
                 Toast.makeText(this, "Total Cost: " + Integer.toString(basket.getSelectedItemsCost()), Toast.LENGTH_SHORT).show();
+                manager.execute(new ExchangeRatesRequest(), "usd", DurationInMillis.ONE_HOUR, EXCHANGE_RATES_LISTENER);
+
                 return true;
 
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
-
-    public void submit(View v) {
-        manager.execute(new TestRequest(), new NetworkListener());
-    }
-
 }
