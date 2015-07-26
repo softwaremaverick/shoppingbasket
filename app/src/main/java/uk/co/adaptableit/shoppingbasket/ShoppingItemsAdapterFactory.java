@@ -1,37 +1,74 @@
 package uk.co.adaptableit.shoppingbasket;
 
 import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.SimpleAdapter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Andrew Clark on 25/07/2015.
  */
 public class ShoppingItemsAdapterFactory {
-    private static String KEY_NAME = "NAME";
-    private static String KEY_PRICE = "PRICE";
+    public static class Item extends HashMap<String, Object> {
+        private static final String KEY_ITEM_CODE = "CODE";
+        private static final String KEY_NAME = "NAME";
+        private static final String KEY_PRICE = "PRICE";
 
-    public SimpleAdapter createItemAdapter(Context context, int resource, int resItemNameId, int resItemPriceId) {
-        List<Map<String, Object>> items = new ArrayList<>();
+        public Item(String itemCode, String name, int priceInPence) {
+            this.put(KEY_ITEM_CODE, itemCode);
+            this.put(KEY_NAME, name);
+            this.put(KEY_PRICE, priceInPence);
+        }
 
-        items.add(createItem("Peas", 95));
-        items.add(createItem("Eggs", 210));
-        items.add(createItem("Milk", 130));
-        items.add(createItem("Beans", 73));
+        public String getItemCode() {
+            return (String) this.get(KEY_ITEM_CODE);
+        }
 
-        SimpleAdapter simpleAdapter = new SimpleAdapter(context, items, resource, new String[]{KEY_NAME, KEY_PRICE}, new int[]{resItemNameId, resItemPriceId});
-        return simpleAdapter;
+        public int getPriceInPence() {
+            return (int) this.get(KEY_PRICE);
+        }
+
+        public String getName() {
+            return (String) this.get(KEY_NAME);
+        }
     }
 
-    private Map<String, Object> createItem(String name, int priceInPence) {
-        Map<String, Object> item = new HashMap<>();
-        item.put(KEY_NAME, name);
-        item.put(KEY_PRICE, new Integer(priceInPence));
+    public SimpleAdapter createItemAdapter(Context context, final int resource, int resItemNameId, int resItemPriceId) {
+        List<Item> items = getProducts();
+        final LayoutInflater mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-        return item;
+        return new SimpleAdapter(context, items, resource,
+                new String[]{Item.KEY_NAME, Item.KEY_PRICE},
+                new int[]{resItemNameId, resItemPriceId}) {
+
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View newConverterView;
+
+                if (convertView == null) {
+                    newConverterView = mInflater.inflate(resource, parent, false);
+                } else {
+                    newConverterView = convertView;
+                }
+
+                newConverterView.setTag(getItem(position));
+                return super.getView(position, newConverterView, parent);
+            }
+        };
+    }
+
+    private List<Item> getProducts() {
+        List<Item> items = new ArrayList<>();
+
+        for (ProductCatalogue.Product product : ProductCatalogue.getProducts()) {
+            items.add(new Item(product.getProductCode(), product.getName(), product.getPriceInPence()));
+        }
+
+        return items;
     }
 }

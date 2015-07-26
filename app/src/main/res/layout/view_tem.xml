@@ -10,15 +10,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingRight="16dp"
-        android:text="Item Name"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <TextView
         android:id="@+id/text_itemprice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingRight="16dp"
-        android:text="Price" />
+        android:paddingRight="16dp" />
 
 
 </LinearLayout>

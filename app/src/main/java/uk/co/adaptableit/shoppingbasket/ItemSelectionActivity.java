@@ -7,6 +7,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -20,11 +21,8 @@ import com.octo.android.robospice.request.listener.RequestListener;
 
 import org.json.JSONException;
 
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Locale;
 
 import uk.co.adaptableit.shoppingbasket.dto.ExchangeRatesDto;
 import uk.co.adaptableit.shoppingbasket.dto.ShoppingBasket;
@@ -35,8 +33,10 @@ import uk.co.adaptableit.shoppingbasket2.R;
 
 public class ItemSelectionActivity extends ActionBarActivity {
 
-    public static final String SAVED_SELECTED_ITEMS = "SELECTED_ITEMS";
-    public static final String SAVED_SELECTED_ITEMS_COST = "SELECTED_ITEMS_COST";
+    private static final String SAVED_BASKET = "SAVED_BASKET";
+
+    private static final NumberFormat UK_CURRENCY_INSTANCE = NumberFormat.getCurrencyInstance(Locale.UK);
+    private static final NumberFormat US_CURRENCY_INSTANCE = NumberFormat.getCurrencyInstance(Locale.US);
 
     private RequestListener<String> EXCHANGE_RATES_LISTENER = new RequestListener<String>() {
         @Override
@@ -78,12 +78,7 @@ public class ItemSelectionActivity extends ActionBarActivity {
             basket = (ShoppingBasket) previousData;
         } else {
             if (savedInstanceState != null) {
-                CharSequence[] savedSelectedItems = savedInstanceState.getStringArray(SAVED_SELECTED_ITEMS);
-                int savedSelectedItemsCost = savedInstanceState.getInt(SAVED_SELECTED_ITEMS_COST);
-
-                if (savedSelectedItems != null) {
-                    basket = new ShoppingBasket(new HashSet<>(Arrays.asList(savedSelectedItems)), savedSelectedItemsCost);
-                }
+                basket = ShoppingBasketBundleMapper.createBasket(savedInstanceState.getBundle(SAVED_BASKET));
             }
         }
 
@@ -103,13 +98,22 @@ public class ItemSelectionActivity extends ActionBarActivity {
         adapter.setViewBinder(new SimpleAdapter.ViewBinder() {
             @Override
             public boolean setViewValue(View view, Object data, String textRepresentation) {
-                if (view.getId() == R.id.text_itemname) {
-                    if (basket.contains((CharSequence) data)) {
-                        view.setBackgroundColor(Color.BLUE);
-                    } else {
-                        view.setBackgroundColor(Color.TRANSPARENT);
-                    }
+                switch (view.getId()) {
+                    case R.id.text_itemprice:
+                        View viewParent = (View) view.getParent();
+                        ShoppingItemsAdapterFactory.Item rowData = (ShoppingItemsAdapterFactory.Item) viewParent.getTag();
+
+                        ((TextView) view).setText(convertPenceToCurrency((Integer) data));
+
+                        if (basket.containsCode(rowData.getItemCode())) {
+                            ((ViewGroup) view.getParent()).setBackgroundColor(Color.BLUE);
+                        } else {
+                            ((ViewGroup) view.getParent()).setBackgroundColor(Color.TRANSPARENT);
+                        }
+
+                        return true;
                 }
+
                 return false;
             }
         });
@@ -123,11 +127,14 @@ public class ItemSelectionActivity extends ActionBarActivity {
                 TextView priceView = (TextView) view.findViewById(R.id.text_itemprice);
                 CharSequence itemName = nameView.getText();
 
-                if (basket.contains(itemName)) {
-                    basket.removeItem(itemName, Integer.parseInt(priceView.getText().toString()));
+                ShoppingItemsAdapterFactory.Item rowData = (ShoppingItemsAdapterFactory.Item) adapter.getItem(position);
+
+                String itemCode = rowData.getItemCode();
+                if (basket.containsCode(itemCode)) {
+                    basket.removeItem(itemCode);
                     nameView.setBackgroundColor(Color.TRANSPARENT);
                 } else {
-                    basket.addItem(itemName, Integer.parseInt(priceView.getText().toString()));
+                    basket.addItem(itemCode);
                     nameView.setBackgroundColor(Color.BLUE);
                 }
 
@@ -136,21 +143,23 @@ public class ItemSelectionActivity extends ActionBarActivity {
         });
     }
 
+    private String convertPenceToCurrency(Integer priceInPence) {
+        float costInPounds = (float) (priceInPence / 100.0);
+
+        return US_CURRENCY_INSTANCE.format(costInPounds);
+    }
+
     private void updatePrice() {
-        costTextView.setText(Integer.toString(basket.getSelectedItemsCost()));
+        costTextView.setText(convertPenceToCurrency(basket.getSelectedItemsCost()));
 
         if (exchangeRates == null) {
             fxCostTextView.setText(R.string.text_NOFX);
             fxCostTextView.setTextColor(Color.RED);
         } else {
             Double ukExchangeRate = exchangeRates.getRates().get("GBP");
-            double fxPrice = basket.getSelectedItemsCost() * ukExchangeRate;
+            double fxPrice = (double) (basket.getSelectedItemsCost() * ukExchangeRate) / 100;
 
-            NumberFormat numberFormat = DecimalFormat.getInstance();
-            numberFormat.setMaximumFractionDigits(2);
-            numberFormat.setMinimumFractionDigits(2);
-
-            fxCostTextView.setText(numberFormat.format(fxPrice));
+            fxCostTextView.setText(UK_CURRENCY_INSTANCE.format(fxPrice));
             fxCostTextView.setTextColor(Color.BLUE);
         }
     }
@@ -162,9 +171,8 @@ public class ItemSelectionActivity extends ActionBarActivity {
 
     @Override
     public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
-        Set<CharSequence> selectedItems = basket.getSelectedItems();
+        outState.putBundle(SAVED_BASKET, ShoppingBasketBundleMapper.createBundle(basket));
 
-        outState.putStringArray(SAVED_SELECTED_ITEMS, selectedItems.toArray(new String[selectedItems.size()]));
         super.onSaveInstanceState(outState, outPersistentState);
     }
 
