@@ -15,10 +15,10 @@ public class ExchangeRatesRequest extends GoogleHttpClientSpiceRequest<String> {
     private String baseUrl;
     private static String TAG = ExchangeRatesRequest.class.getName();
 
-    public ExchangeRatesRequest() {
+    public ExchangeRatesRequest(String appId, String baseCurrency) {
         super(java.lang.String.class);
 
-        baseUrl = "https://openexchangerates.org/api/latest.json?app_id=3553795c5e314300b22c71b95f647225&base=USD";
+        baseUrl = "https://openexchangerates.org/api/latest.json?app_id="+appId+"&base="+baseCurrency;
     }
 
     @Override

@@ -24,9 +24,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import uk.co.adaptableit.shoppingbasket.dto.ExchangeRatesDto;
 import uk.co.adaptableit.shoppingbasket.dto.ShoppingBasket;
 import uk.co.adaptableit.shoppingbasket.rates.ExchangeRatesDeserializer;
-import uk.co.adaptableit.shoppingbasket.dto.ExchangeRatesDto;
 import uk.co.adaptableit.shoppingbasket.rates.ExchangeRatesRequest;
 import uk.co.adaptableit.shoppingbasket2.R;
 
@@ -165,7 +165,14 @@ public class ItemSelectionActivity extends ActionBarActivity {
 
         manager.start(this);
 
-        manager.execute(new ExchangeRatesRequest(), "usd", DurationInMillis.ONE_HOUR, EXCHANGE_RATES_LISTENER);
+        requestExchangeRates();
+    }
+
+    private void requestExchangeRates() {
+        String appId = "3553795c5e314300b22c71b95f647225";
+        String baseCurrenccy = "USD";
+
+        manager.execute(new ExchangeRatesRequest(appId, baseCurrenccy), baseCurrenccy, DurationInMillis.ONE_HOUR, EXCHANGE_RATES_LISTENER);
     }
 
     @Override
@@ -180,7 +187,7 @@ public class ItemSelectionActivity extends ActionBarActivity {
         switch (item.getItemId()) {
             case R.id.action_checkout:
                 Toast.makeText(this, "Total Cost: " + Integer.toString(basket.getSelectedItemsCost()), Toast.LENGTH_SHORT).show();
-                manager.execute(new ExchangeRatesRequest(), "usd", DurationInMillis.ONE_HOUR, EXCHANGE_RATES_LISTENER);
+                requestExchangeRates();
 
                 return true;
 
