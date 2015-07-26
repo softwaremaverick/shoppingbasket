@@ -1,4 +1,4 @@
-package uk.co.adaptableit.shoppingbasket;
+package uk.co.adaptableit.shoppingbasket.rates;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -7,6 +7,8 @@ import org.json.JSONTokener;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import uk.co.adaptableit.shoppingbasket.dto.ExchangeRatesDto;
 
 /**
  * Created by Andrew Clark on 26/07/2015.

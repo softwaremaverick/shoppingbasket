@@ -1,4 +1,4 @@
-package uk.co.adaptableit.shoppingbasket;
+package uk.co.adaptableit.shoppingbasket.dto;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,7 +12,6 @@ public class ShoppingBasket {
     private int selectedCost = 0;
 
     public ShoppingBasket() {
-
     }
 
     public ShoppingBasket(Set<CharSequence> itemNames, int itemCostInPence) {
@@ -20,14 +19,14 @@ public class ShoppingBasket {
         this.selectedCost = itemCostInPence;
     }
 
-    public void addItem (CharSequence name, int priceInPence) {
+    public void addItem(CharSequence name, int priceInPence) {
         if (!selectedItems.contains(name)) {
             selectedItems.add(name);
             selectedCost += priceInPence;
         }
     }
 
-    public void removeItem (CharSequence name, int priceInPence) {
+    public void removeItem(CharSequence name, int priceInPence) {
         if (selectedItems.contains(name)) {
             selectedItems.remove(name);
             selectedCost -= priceInPence;
@@ -42,7 +41,7 @@ public class ShoppingBasket {
         return selectedCost;
     }
 
-    public boolean contains (CharSequence name) {
+    public boolean contains(CharSequence name) {
         return selectedItems.contains(name);
     }
 }

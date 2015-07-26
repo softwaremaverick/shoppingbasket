@@ -24,6 +24,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import uk.co.adaptableit.shoppingbasket.dto.ShoppingBasket;
+import uk.co.adaptableit.shoppingbasket.rates.ExchangeRatesDeserializer;
+import uk.co.adaptableit.shoppingbasket.dto.ExchangeRatesDto;
+import uk.co.adaptableit.shoppingbasket.rates.ExchangeRatesRequest;
 import uk.co.adaptableit.shoppingbasket2.R;
 
 

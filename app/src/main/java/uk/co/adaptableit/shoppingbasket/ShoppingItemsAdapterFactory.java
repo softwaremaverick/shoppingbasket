@@ -23,7 +23,7 @@ public class ShoppingItemsAdapterFactory {
         items.add(createItem("Milk", 130));
         items.add(createItem("Beans", 73));
 
-        SimpleAdapter simpleAdapter = new SimpleAdapter(context, items, resource, new String[] {KEY_NAME, KEY_PRICE}, new int[] {resItemNameId, resItemPriceId});
+        SimpleAdapter simpleAdapter = new SimpleAdapter(context, items, resource, new String[]{KEY_NAME, KEY_PRICE}, new int[]{resItemNameId, resItemPriceId});
         return simpleAdapter;
     }
 
