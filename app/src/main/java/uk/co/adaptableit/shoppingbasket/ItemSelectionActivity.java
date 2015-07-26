@@ -20,6 +20,8 @@ import com.octo.android.robospice.request.listener.RequestListener;
 
 import org.json.JSONException;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -44,14 +46,14 @@ public class ItemSelectionActivity extends ActionBarActivity {
 
         @Override
         public void onRequestSuccess(String jsonResponse) {
-            Toast.makeText(ItemSelectionActivity.this, "Success", Toast.LENGTH_SHORT).show();
-
             try {
-                ExchangeRatesDto rates = ExchangeRatesDeserializer.deserialize(jsonResponse);
+                ItemSelectionActivity.this.exchangeRates = ExchangeRatesDeserializer.deserialize(jsonResponse);
 
-                Toast.makeText(ItemSelectionActivity.this, "UKP=" + rates.getRates().get("GBP").toString(), Toast.LENGTH_SHORT).show();
+                if (basket != null) {
+                    updatePrice();
+                }
             } catch (JSONException e) {
-                e.printStackTrace();
+                Toast.makeText(ItemSelectionActivity.this, R.string.text_FX_FAILED, Toast.LENGTH_SHORT).show();
             }
         }
     };
@@ -60,8 +62,11 @@ public class ItemSelectionActivity extends ActionBarActivity {
 
     private ShoppingBasket basket = new ShoppingBasket();
 
+    private ExchangeRatesDto exchangeRates;
+
     private SimpleAdapter adapter;
     private TextView costTextView;
+    private TextView fxCostTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +90,7 @@ public class ItemSelectionActivity extends ActionBarActivity {
         setContentView(R.layout.activity_item_selection);
 
         costTextView = (TextView) findViewById(R.id.text_totalCost);
+        fxCostTextView = (TextView) findViewById(R.id.text_fxCost);
         updatePrice();
 
         ListView items = (ListView) findViewById(R.id.list_items);
@@ -132,6 +138,21 @@ public class ItemSelectionActivity extends ActionBarActivity {
 
     private void updatePrice() {
         costTextView.setText(Integer.toString(basket.getSelectedItemsCost()));
+
+        if (exchangeRates == null) {
+            fxCostTextView.setText(R.string.text_NOFX);
+            fxCostTextView.setTextColor(Color.RED);
+        } else {
+            Double ukExchangeRate = exchangeRates.getRates().get("GBP");
+            double fxPrice = basket.getSelectedItemsCost() * ukExchangeRate;
+
+            NumberFormat numberFormat = DecimalFormat.getInstance();
+            numberFormat.setMaximumFractionDigits(2);
+            numberFormat.setMinimumFractionDigits(2);
+
+            fxCostTextView.setText(numberFormat.format(fxPrice));
+            fxCostTextView.setTextColor(Color.BLUE);
+        }
     }
 
     @Override

@@ -5,4 +5,7 @@
     <string name="text_selectitems">Select Items</string>
     <string name="text_checkout">Checkout</string>
     <string name="text_total">Total</string>
+
+    <string name="text_NOFX">(-)</string>
+    <string name="text_FX_FAILED">Error download exchange rates!</string>
 </resources>
