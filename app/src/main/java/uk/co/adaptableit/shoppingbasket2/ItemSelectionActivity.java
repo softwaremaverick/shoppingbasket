@@ -8,8 +8,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -17,11 +15,11 @@ import android.widget.Toast;
 
 import com.octo.android.robospice.SpiceManager;
 import com.octo.android.robospice.persistence.exception.SpiceException;
+import com.octo.android.robospice.request.SpiceRequest;
 import com.octo.android.robospice.request.listener.RequestListener;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 
@@ -152,6 +150,22 @@ public class ItemSelectionActivity extends ActionBarActivity {
         super.onStart();
 
         manager.start(this);
+
+        SpiceRequest request = new ExchangeRatesRequest();
+
+        manager.execute(request, new RequestListener<ExchangeRatesDto>() {
+            @Override
+            public void onRequestFailure(SpiceException spiceException) {
+                Toast.makeText(ItemSelectionActivity.this, "fAILURE", Toast.LENGTH_SHORT).show();;
+            }
+
+            @Override
+            public void onRequestSuccess(ExchangeRatesDto o) {
+                Toast.makeText(ItemSelectionActivity.this, "Success " + o.toString(), Toast.LENGTH_SHORT).show();
+
+                Toast.makeText(ItemSelectionActivity.this, "UKP=" + o.getRates().get("GBP").toString(), Toast.LENGTH_SHORT).show();;
+            }
+        });
     }
 
     @Override
@@ -166,13 +180,11 @@ public class ItemSelectionActivity extends ActionBarActivity {
         switch (item.getItemId()) {
             case R.id.action_checkout:
                 Toast.makeText(this, "Total Cost: " + Integer.toString(basket.getSelectedItemsCost()), Toast.LENGTH_SHORT).show();
-                ;
                 return true;
 
             default:
                 return super.onOptionsItemSelected(item);
         }
-
     }
 
     public void submit(View v) {
