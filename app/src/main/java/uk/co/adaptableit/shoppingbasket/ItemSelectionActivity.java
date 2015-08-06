@@ -166,7 +166,7 @@ public class ItemSelectionActivity extends AppCompatActivity {
         } else {
             double fxPrice = currencyFormatter.calculateFXPrice(basket.getSelectedItemsCost(), SELECTED_FX_CURRENCY_CODE, exchangeRates);
 
-            fxCostTextView.setText(currencyFormatter.getNumberFormat(SELECTED_FX_CURRENCY_CODE).format(fxPrice));
+            fxCostTextView.setText(currencyFormatter.getNumberFormat(SELECTED_FX_CURRENCY_CODE).format(fxPrice) + " " + SELECTED_FX_CURRENCY_CODE);
             fxCostTextView.setTextColor(Color.BLUE);
         }
     }
@@ -220,7 +220,7 @@ public class ItemSelectionActivity extends AppCompatActivity {
                     Double fxPrice = currencyFormatter.calculateFXPrice(basket.getSelectedItemsCost(), SELECTED_FX_CURRENCY_CODE, exchangeRates);
 
                     if (fxPrice != null) {
-                        String fxCostString = currencyFormatter.getNumberFormat(SELECTED_FX_CURRENCY_CODE).format(fxPrice);
+                        String fxCostString = currencyFormatter.getNumberFormat(SELECTED_FX_CURRENCY_CODE).format(fxPrice) + " " + SELECTED_FX_CURRENCY_CODE;
 
                         totalCostString = String.format("%s (%s)", baseCost, fxCostString);
                     }
