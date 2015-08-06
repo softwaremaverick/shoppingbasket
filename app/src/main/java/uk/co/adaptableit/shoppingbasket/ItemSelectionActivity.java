@@ -4,11 +4,13 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -21,6 +23,7 @@ import com.octo.android.robospice.request.listener.RequestListener;
 
 import org.json.JSONException;
 
+import java.io.LineNumberReader;
 import java.text.NumberFormat;
 import java.util.Locale;
 
@@ -37,6 +40,7 @@ public class ItemSelectionActivity extends ActionBarActivity {
 
     private static final NumberFormat UK_CURRENCY_INSTANCE = NumberFormat.getCurrencyInstance(Locale.UK);
     private static final NumberFormat US_CURRENCY_INSTANCE = NumberFormat.getCurrencyInstance(Locale.US);
+    private static final String TAG = ItemSelectionActivity.class.getName();
 
     private RequestListener<String> EXCHANGE_RATES_LISTENER = new RequestListener<String>() {
         @Override
@@ -101,11 +105,11 @@ public class ItemSelectionActivity extends ActionBarActivity {
                 switch (view.getId()) {
                     case R.id.text_itemprice:
                         View viewParent = (View) view.getParent();
-                        ShoppingItemsAdapterFactory.Item rowData = (ShoppingItemsAdapterFactory.Item) viewParent.getTag();
+                        ShoppingItemsAdapterFactory.RowData rowData = (ShoppingItemsAdapterFactory.RowData) viewParent.getTag();
 
                         ((TextView) view).setText(convertPenceToCurrency((Integer) data));
 
-                        if (basket.containsCode(rowData.getItemCode())) {
+                        if (basket.containsCode(rowData.getItem().getItemCode())) {
                             ((ViewGroup) view.getParent()).setBackgroundColor(Color.BLUE);
                         } else {
                             ((ViewGroup) view.getParent()).setBackgroundColor(Color.TRANSPARENT);
@@ -123,25 +127,25 @@ public class ItemSelectionActivity extends ActionBarActivity {
         items.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                TextView nameView = (TextView) view.findViewById(R.id.text_itemname);
-                TextView priceView = (TextView) view.findViewById(R.id.text_itemprice);
-                CharSequence itemName = nameView.getText();
+                ShoppingItemsAdapterFactory.RowData rowData = (ShoppingItemsAdapterFactory.RowData) view.getTag();
+                String itemCode = rowData.getItem().getItemCode();
 
-                ShoppingItemsAdapterFactory.Item rowData = (ShoppingItemsAdapterFactory.Item) adapter.getItem(position);
-
-                String itemCode = rowData.getItemCode();
                 if (basket.containsCode(itemCode)) {
+                    Log.d(TAG, "Item " + itemCode + " being removed from basket");
+
                     basket.removeItem(itemCode);
-                    nameView.setBackgroundColor(Color.TRANSPARENT);
+                    rowData.getCheckboxView().setChecked(false);
                 } else {
+                    Log.d(TAG, "Item " + itemCode + " being added to the basket");
+
                     basket.addItem(itemCode);
-                    nameView.setBackgroundColor(Color.BLUE);
+                    rowData.getCheckboxView().setChecked(true);
                 }
 
                 updatePrice();
             }
         });
-    }
+}
 
     private String convertPenceToCurrency(Integer priceInPence) {
         float costInPounds = (float) (priceInPence / 100.0);
