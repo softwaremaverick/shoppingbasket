@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,19 +32,21 @@ import uk.co.adaptableit.shoppingbasket.rates.ExchangeRatesRequest;
 import uk.co.adaptableit.shoppingbasket2.R;
 
 
-public class ItemSelectionActivity extends ActionBarActivity {
+public class ItemSelectionActivity extends AppCompatActivity {
 
     private static final String TAG = ItemSelectionActivity.class.getName();
 
     private static final String SAVED_BASKET = "SAVED_BASKET";
+    private static final String SELECTED_FX_CURRENCY_CODE = "GBP";
 
-    private static final NumberFormat UK_CURRENCY_INSTANCE = NumberFormat.getCurrencyInstance(Locale.UK);
-    private static final NumberFormat US_CURRENCY_INSTANCE = NumberFormat.getCurrencyInstance(Locale.US);
+    private CurrencyFormatter currencyFormatter = CurrencyFormatter.getInstance();
+
+    private ProductCatalogue productCatalogue = ProductCatalogue.getInstance();
 
     private RequestListener<String> EXCHANGE_RATES_LISTENER = new RequestListener<String>() {
         @Override
         public void onRequestFailure(SpiceException spiceException) {
-            Toast.makeText(ItemSelectionActivity.this, "fAILURE", Toast.LENGTH_SHORT).show();
+            Toast.makeText(ItemSelectionActivity.this, R.string.text_FX_FAILED, Toast.LENGTH_SHORT).show();
         }
 
         @Override
@@ -64,7 +67,7 @@ public class ItemSelectionActivity extends ActionBarActivity {
 
     private SpiceManager manager = new SpiceManager(NetworkRequestService.class);
 
-    private ShoppingBasket basket = new ShoppingBasket();
+    private ShoppingBasket basket = new ShoppingBasket(productCatalogue);
 
     private ExchangeRatesDto exchangeRates;
 
@@ -96,6 +99,7 @@ public class ItemSelectionActivity extends ActionBarActivity {
         ListView items = (ListView) findViewById(R.id.list_items);
 
         adapter = new ShoppingItemsAdapterFactory().createItemAdapter(this,
+                productCatalogue,
                 R.layout.view_tem,
                 R.id.text_itemname,
                 R.id.text_itemprice);
@@ -108,7 +112,7 @@ public class ItemSelectionActivity extends ActionBarActivity {
                         View viewParent = (View) view.getParent();
                         ShoppingItemsAdapterFactory.RowData rowData = (ShoppingItemsAdapterFactory.RowData) viewParent.getTag();
 
-                        ((TextView) view).setText(convertPenceToCurrency((Integer) data, US_CURRENCY_INSTANCE));
+                        ((TextView) view).setText(currencyFormatter.formatPennies((Integer) data, productCatalogue.getCurrencyCode()));
 
                         boolean selected = basket.containsCode(rowData.getItem().getItemCode());
                         rowData.getCheckboxView().setChecked(selected);
@@ -145,35 +149,26 @@ public class ItemSelectionActivity extends ActionBarActivity {
         });
     }
 
-    private String convertPenceToCurrency(Integer priceInPence, NumberFormat numberFormatter) {
-        float costInPounds = (float) (priceInPence / 100.0);
+    private void requestExchangeRates() {
+        String baseUrl = getString(R.string.rates_api_baseurl);
+        String appId = getString(R.string.rates_api_app_id);
+        String baseCurrenccy = productCatalogue.getCurrencyCode();
 
-        return numberFormatter.format(costInPounds);
+        manager.execute(new ExchangeRatesRequest(baseUrl, appId, baseCurrenccy), baseCurrenccy, DurationInMillis.ONE_HOUR, EXCHANGE_RATES_LISTENER);
     }
 
     private void updatePrice() {
-        costTextView.setText(convertPenceToCurrency(basket.getSelectedItemsCost(), US_CURRENCY_INSTANCE));
+        costTextView.setText(currencyFormatter.formatPennies(basket.getSelectedItemsCost(), productCatalogue.getCurrencyCode()));
 
         if (exchangeRates == null) {
             fxCostTextView.setText(R.string.text_NOFX);
             fxCostTextView.setTextColor(Color.RED);
         } else {
-            double fxPrice = calculateFXPrice("GBP", basket.getSelectedItemsCost());
+            double fxPrice = currencyFormatter.calculateFXPrice(basket.getSelectedItemsCost(), SELECTED_FX_CURRENCY_CODE, exchangeRates);
 
-            fxCostTextView.setText(UK_CURRENCY_INSTANCE.format(fxPrice));
+            fxCostTextView.setText(currencyFormatter.getNumberFormat(SELECTED_FX_CURRENCY_CODE).format(fxPrice));
             fxCostTextView.setTextColor(Color.BLUE);
         }
-    }
-
-    private Double calculateFXPrice(String currencyCode, int basePriceInPennies) {
-        Double fxRate = exchangeRates.getRates().get(currencyCode);
-        Double result = null;
-
-        if (fxRate != null) {
-            result = Double.valueOf((double) (basePriceInPennies * fxRate) / 100);
-        }
-
-        return result;
     }
 
     @Override
@@ -195,7 +190,6 @@ public class ItemSelectionActivity extends ActionBarActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_item_selection, menu);
         return true;
     }
@@ -206,14 +200,6 @@ public class ItemSelectionActivity extends ActionBarActivity {
         manager.start(this);
 
         requestExchangeRates();
-    }
-
-    private void requestExchangeRates() {
-        String baseUrl = getString(R.string.rates_api_baseurl);
-        String appId = getString(R.string.rates_api_app_id);
-        String baseCurrenccy = getString(R.string.rates_api_base_currency);
-
-        manager.execute(new ExchangeRatesRequest(baseUrl, appId, baseCurrenccy), baseCurrenccy, DurationInMillis.ONE_HOUR, EXCHANGE_RATES_LISTENER);
     }
 
     @Override
@@ -227,14 +213,14 @@ public class ItemSelectionActivity extends ActionBarActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_checkout:
-                final String baseCost = convertPenceToCurrency(basket.getSelectedItemsCost(), US_CURRENCY_INSTANCE);
+                final String baseCost = currencyFormatter.formatPennies(basket.getSelectedItemsCost(), productCatalogue.getCurrencyCode());
                 String totalCostString = null;
 
                 if (exchangeRates != null) {
-                    Double fxPrice = calculateFXPrice("GBP", basket.getSelectedItemsCost());
+                    Double fxPrice = currencyFormatter.calculateFXPrice(basket.getSelectedItemsCost(), SELECTED_FX_CURRENCY_CODE, exchangeRates);
 
                     if (fxPrice != null) {
-                        String fxCostString = UK_CURRENCY_INSTANCE.format(fxPrice);
+                        String fxCostString = currencyFormatter.getNumberFormat(SELECTED_FX_CURRENCY_CODE).format(fxPrice);
 
                         totalCostString = String.format("%s (%s)", baseCost, fxCostString);
                     }

@@ -11,8 +11,10 @@ import uk.co.adaptableit.shoppingbasket.ProductCatalogue;
 public class ShoppingBasket {
     private Set<CharSequence> selectedItems = new HashSet<>();
     private int selectedCost = 0;
+    private ProductCatalogue productCatalogue;
 
-    public ShoppingBasket() {
+    public ShoppingBasket(ProductCatalogue productCatalogue) {
+        this.productCatalogue = productCatalogue;
     }
 
     public ShoppingBasket(Set<CharSequence> itemNames, int itemCostInPence) {
@@ -22,7 +24,7 @@ public class ShoppingBasket {
 
     public void addItem(CharSequence itemCode) {
         if (!selectedItems.contains(itemCode)) {
-            selectedCost += ProductCatalogue.getProduct(itemCode.toString()).getPriceInPence();
+            selectedCost += productCatalogue.getProduct(itemCode.toString()).getPriceInPence();
 
             selectedItems.add(itemCode);
         }
@@ -30,7 +32,7 @@ public class ShoppingBasket {
 
     public void removeItem(CharSequence itemCode) {
         if (selectedItems.contains(itemCode)) {
-            selectedCost -= ProductCatalogue.getProduct(itemCode.toString()).getPriceInPence();
+            selectedCost -= productCatalogue.getProduct(itemCode.toString()).getPriceInPence();
 
             selectedItems.remove(itemCode);
         }
@@ -42,10 +44,6 @@ public class ShoppingBasket {
 
     public int getSelectedItemsCost() {
         return selectedCost;
-    }
-
-    public void setSelectedItemsCost(int cost) {
-        this.selectedCost = selectedCost;
     }
 
     public boolean containsCode(CharSequence name) {

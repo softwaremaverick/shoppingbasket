@@ -26,7 +26,7 @@ public class ShoppingBasketBundleMapper {
     }
 
     public static ShoppingBasket createBasket(Bundle bundle) {
-        ShoppingBasket basket = new ShoppingBasket();
+        ShoppingBasket basket = new ShoppingBasket(ProductCatalogue.getInstance());
         String[] selectedItems = bundle.getStringArray(SAVED_SELECTED_ITEMS);
 
         if (selectedItems != null) {

@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
  * Created by Andrew Clark on 26/07/2015.
  */
 public class ProductCatalogue {
+
     public static class Product {
         private String productCode;
         private String name;
@@ -31,20 +32,34 @@ public class ProductCatalogue {
         }
     }
 
+    private static String currencyCode;
+
     private static final LinkedHashMap<String, Product> productMap = new LinkedHashMap<>();
 
     static {
+        currencyCode = "USD";
+
         productMap.put("1", new Product("1", "Peas", 95));
         productMap.put("2", new Product("2", "Eggs", 210));
         productMap.put("3", new Product("3", "Milk", 130));
         productMap.put("4", new Product("4", "Beans", 73));
     }
 
-    public static Collection<Product> getProducts() {
+    private static ProductCatalogue INSTANCE = new ProductCatalogue();
+
+    public static ProductCatalogue getInstance() {
+        return INSTANCE;
+    }
+
+    public Collection<Product> getProducts() {
         return productMap.values();
     }
 
-    public static Product getProduct(String productCode) {
+    public Product getProduct(String productCode) {
         return productMap.get(productCode);
+    }
+
+    public String getCurrencyCode() {
+        return currencyCode;
     }
 }

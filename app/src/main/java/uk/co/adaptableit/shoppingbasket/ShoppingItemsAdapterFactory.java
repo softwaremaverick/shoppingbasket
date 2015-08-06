@@ -59,8 +59,8 @@ public class ShoppingItemsAdapterFactory {
         }
     }
 
-    public SimpleAdapter createItemAdapter(Context context, final int resource, int resItemNameId, int resItemPriceId) {
-        List<Item> items = getProducts();
+    public SimpleAdapter createItemAdapter(Context context, final ProductCatalogue productCatalogue, final int resource, int resItemNameId, int resItemPriceId) {
+        List<Item> items = getProducts(productCatalogue);
         final LayoutInflater mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
         return new SimpleAdapter(context, items, resource,
@@ -93,10 +93,10 @@ public class ShoppingItemsAdapterFactory {
         };
     }
 
-    private List<Item> getProducts() {
+    private List<Item> getProducts(ProductCatalogue productCatalogue) {
         List<Item> items = new ArrayList<>();
 
-        for (ProductCatalogue.Product product : ProductCatalogue.getProducts()) {
+        for (ProductCatalogue.Product product : productCatalogue.getProducts()) {
             items.add(new Item(product.getProductCode(), product.getName(), product.getPriceInPence()));
         }
 
