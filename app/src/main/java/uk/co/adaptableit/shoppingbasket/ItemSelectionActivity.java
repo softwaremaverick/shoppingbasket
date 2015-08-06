@@ -23,10 +23,15 @@ import com.octo.android.robospice.request.listener.RequestListener;
 import org.json.JSONException;
 
 import java.text.NumberFormat;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
+import uk.co.adaptableit.shoppingbasket.dto.CurrenciesDto;
 import uk.co.adaptableit.shoppingbasket.dto.ExchangeRatesDto;
 import uk.co.adaptableit.shoppingbasket.dto.ShoppingBasket;
+import uk.co.adaptableit.shoppingbasket.rates.CurrenciesDeserializer;
+import uk.co.adaptableit.shoppingbasket.rates.CurrenciesRequest;
 import uk.co.adaptableit.shoppingbasket.rates.ExchangeRatesDeserializer;
 import uk.co.adaptableit.shoppingbasket.rates.ExchangeRatesRequest;
 import uk.co.adaptableit.shoppingbasket2.R;
@@ -39,9 +44,32 @@ public class ItemSelectionActivity extends AppCompatActivity {
     private static final String SAVED_BASKET = "SAVED_BASKET";
     private static final String SELECTED_FX_CURRENCY_CODE = "GBP";
 
+    private static final String CURRENCIES_CACHE_KEY = "CURRENCIES";
+
     private CurrencyFormatter currencyFormatter = CurrencyFormatter.getInstance();
 
     private ProductCatalogue productCatalogue = ProductCatalogue.getInstance();
+
+    private CurrenciesDto currencyCodeDescriptions;
+
+    private RequestListener<String> CURRENCY_CODES_LISTENER = new RequestListener<String>() {
+        @Override
+        public void onRequestFailure(SpiceException spiceException) {
+            Toast.makeText(ItemSelectionActivity.this, R.string.text_CURRENCY_CODES_FAILED, Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onRequestSuccess(String jsonResponse) {
+            try {
+                ItemSelectionActivity.this.currencyCodeDescriptions = CurrenciesDeserializer.deserialize(jsonResponse);
+
+            } catch (JSONException e) {
+                Log.e(TAG, "Error downloading currency codes", e);
+
+                Toast.makeText(ItemSelectionActivity.this, R.string.text_CURRENCY_CODES_FAILED, Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
 
     private RequestListener<String> EXCHANGE_RATES_LISTENER = new RequestListener<String>() {
         @Override
@@ -155,6 +183,7 @@ public class ItemSelectionActivity extends AppCompatActivity {
         String baseCurrenccy = productCatalogue.getCurrencyCode();
 
         manager.execute(new ExchangeRatesRequest(baseUrl, appId, baseCurrenccy), baseCurrenccy, DurationInMillis.ONE_HOUR, EXCHANGE_RATES_LISTENER);
+        manager.execute(new CurrenciesRequest(baseUrl, appId), CURRENCIES_CACHE_KEY, DurationInMillis.ONE_WEEK, CURRENCY_CODES_LISTENER);
     }
 
     private void updatePrice() {

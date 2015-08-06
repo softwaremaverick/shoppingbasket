@@ -8,4 +8,6 @@
 
     <string name="text_NOFX">(-)</string>
     <string name="text_FX_FAILED">Error downloading exchange rates!</string>
+    <string name="text_CURRENCY_CODES_FAILED">Error downloading currency codes!</string>
+
 </resources>
