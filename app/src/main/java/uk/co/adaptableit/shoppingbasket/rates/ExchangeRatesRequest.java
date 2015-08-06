@@ -12,20 +12,20 @@ import roboguice.util.temp.Ln;
  */
 public class ExchangeRatesRequest extends GoogleHttpClientSpiceRequest<String> {
 
-    private String baseUrl;
+    private String url;
     private static String TAG = ExchangeRatesRequest.class.getName();
 
-    public ExchangeRatesRequest(String appId, String baseCurrency) {
+    public ExchangeRatesRequest(String baseUrl, String appId, String baseCurrency) {
         super(java.lang.String.class);
 
-        baseUrl = "https://openexchangerates.org/api/latest.json?app_id=" + appId + "&base=" + baseCurrency;
+        this.url = String.format("%s/latest.json?app_id=%s&base=%s", baseUrl, appId, baseCurrency);
     }
 
     @Override
     public String loadDataFromNetwork() throws Exception {
-        Ln.d("Call web service " + baseUrl);
+        Ln.d("Call web service " + url);
         HttpRequest request = getHttpRequestFactory()//
-                .buildGetRequest(new GenericUrl(baseUrl));
+                .buildGetRequest(new GenericUrl(url));
 
         HttpResponse response = request.execute();
         String result = null;

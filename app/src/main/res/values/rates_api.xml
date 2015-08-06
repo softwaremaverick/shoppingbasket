@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="rates_api_baseurl">https://openexchangerates.org/api</string>
+
+    <string name="rates_api_app_id">3553795c5e314300b22c71b95f647225</string>
+    <string name="rates_api_base_currency">USD</string>
+
+</resources>

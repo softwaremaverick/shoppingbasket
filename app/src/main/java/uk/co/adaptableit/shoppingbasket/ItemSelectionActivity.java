@@ -8,9 +8,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -23,7 +21,6 @@ import com.octo.android.robospice.request.listener.RequestListener;
 
 import org.json.JSONException;
 
-import java.io.LineNumberReader;
 import java.text.NumberFormat;
 import java.util.Locale;
 
@@ -36,11 +33,12 @@ import uk.co.adaptableit.shoppingbasket2.R;
 
 public class ItemSelectionActivity extends ActionBarActivity {
 
+    private static final String TAG = ItemSelectionActivity.class.getName();
+
     private static final String SAVED_BASKET = "SAVED_BASKET";
 
     private static final NumberFormat UK_CURRENCY_INSTANCE = NumberFormat.getCurrencyInstance(Locale.UK);
     private static final NumberFormat US_CURRENCY_INSTANCE = NumberFormat.getCurrencyInstance(Locale.US);
-    private static final String TAG = ItemSelectionActivity.class.getName();
 
     private RequestListener<String> EXCHANGE_RATES_LISTENER = new RequestListener<String>() {
         @Override
@@ -57,6 +55,8 @@ public class ItemSelectionActivity extends ActionBarActivity {
                     updatePrice();
                 }
             } catch (JSONException e) {
+                Log.e(TAG, "Error downloading exchange rates", e);
+
                 Toast.makeText(ItemSelectionActivity.this, R.string.text_FX_FAILED, Toast.LENGTH_SHORT).show();
             }
         }
@@ -90,6 +90,7 @@ public class ItemSelectionActivity extends ActionBarActivity {
 
         costTextView = (TextView) findViewById(R.id.text_totalCost);
         fxCostTextView = (TextView) findViewById(R.id.text_fxCost);
+
         updatePrice();
 
         ListView items = (ListView) findViewById(R.id.list_items);
@@ -107,13 +108,10 @@ public class ItemSelectionActivity extends ActionBarActivity {
                         View viewParent = (View) view.getParent();
                         ShoppingItemsAdapterFactory.RowData rowData = (ShoppingItemsAdapterFactory.RowData) viewParent.getTag();
 
-                        ((TextView) view).setText(convertPenceToCurrency((Integer) data));
+                        ((TextView) view).setText(convertPenceToCurrency((Integer) data, US_CURRENCY_INSTANCE));
 
-                        if (basket.containsCode(rowData.getItem().getItemCode())) {
-                            ((ViewGroup) view.getParent()).setBackgroundColor(Color.BLUE);
-                        } else {
-                            ((ViewGroup) view.getParent()).setBackgroundColor(Color.TRANSPARENT);
-                        }
+                        boolean selected = basket.containsCode(rowData.getItem().getItemCode());
+                        rowData.getCheckboxView().setChecked(selected);
 
                         return true;
                 }
@@ -145,27 +143,37 @@ public class ItemSelectionActivity extends ActionBarActivity {
                 updatePrice();
             }
         });
-}
+    }
 
-    private String convertPenceToCurrency(Integer priceInPence) {
+    private String convertPenceToCurrency(Integer priceInPence, NumberFormat numberFormatter) {
         float costInPounds = (float) (priceInPence / 100.0);
 
-        return US_CURRENCY_INSTANCE.format(costInPounds);
+        return numberFormatter.format(costInPounds);
     }
 
     private void updatePrice() {
-        costTextView.setText(convertPenceToCurrency(basket.getSelectedItemsCost()));
+        costTextView.setText(convertPenceToCurrency(basket.getSelectedItemsCost(), US_CURRENCY_INSTANCE));
 
         if (exchangeRates == null) {
             fxCostTextView.setText(R.string.text_NOFX);
             fxCostTextView.setTextColor(Color.RED);
         } else {
-            Double ukExchangeRate = exchangeRates.getRates().get("GBP");
-            double fxPrice = (double) (basket.getSelectedItemsCost() * ukExchangeRate) / 100;
+            double fxPrice = calculateFXPrice("GBP", basket.getSelectedItemsCost());
 
             fxCostTextView.setText(UK_CURRENCY_INSTANCE.format(fxPrice));
             fxCostTextView.setTextColor(Color.BLUE);
         }
+    }
+
+    private Double calculateFXPrice(String currencyCode, int basePriceInPennies) {
+        Double fxRate = exchangeRates.getRates().get(currencyCode);
+        Double result = null;
+
+        if (fxRate != null) {
+            result = Double.valueOf((double) (basePriceInPennies * fxRate) / 100);
+        }
+
+        return result;
     }
 
     @Override
@@ -195,17 +203,17 @@ public class ItemSelectionActivity extends ActionBarActivity {
     @Override
     protected void onStart() {
         super.onStart();
-
         manager.start(this);
 
         requestExchangeRates();
     }
 
     private void requestExchangeRates() {
-        String appId = "3553795c5e314300b22c71b95f647225";
-        String baseCurrenccy = "USD";
+        String baseUrl = getString(R.string.rates_api_baseurl);
+        String appId = getString(R.string.rates_api_app_id);
+        String baseCurrenccy = getString(R.string.rates_api_base_currency);
 
-        manager.execute(new ExchangeRatesRequest(appId, baseCurrenccy), baseCurrenccy, DurationInMillis.ONE_HOUR, EXCHANGE_RATES_LISTENER);
+        manager.execute(new ExchangeRatesRequest(baseUrl, appId, baseCurrenccy), baseCurrenccy, DurationInMillis.ONE_HOUR, EXCHANGE_RATES_LISTENER);
     }
 
     @Override
@@ -219,8 +227,25 @@ public class ItemSelectionActivity extends ActionBarActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_checkout:
-                Toast.makeText(this, "Total Cost: " + Integer.toString(basket.getSelectedItemsCost()), Toast.LENGTH_SHORT).show();
-                requestExchangeRates();
+                final String baseCost = convertPenceToCurrency(basket.getSelectedItemsCost(), US_CURRENCY_INSTANCE);
+                String totalCostString = null;
+
+                if (exchangeRates != null) {
+                    Double fxPrice = calculateFXPrice("GBP", basket.getSelectedItemsCost());
+
+                    if (fxPrice != null) {
+                        String fxCostString = UK_CURRENCY_INSTANCE.format(fxPrice);
+
+                        totalCostString = String.format("%s (%s)", baseCost, fxCostString);
+                    }
+                }
+
+                if (totalCostString == null) {
+                    totalCostString = String.format("%s (-)", baseCost);
+                }
+
+                String totalTextString = getString(R.string.text_total);
+                Toast.makeText(this, totalTextString + ": " + totalCostString, Toast.LENGTH_SHORT).show();
 
                 return true;
 
